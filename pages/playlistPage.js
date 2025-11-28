@@ -2,33 +2,37 @@ export class PlaylistPage {
   constructor(page) {
     this.page = page;
 
-    // LOCATORS
     this.searchInput = page.getByLabel('Search');
-    this.trackList = page.locator('#tracklist');
     this.trackTitles = page.locator('#tracklist p');
     this.addButtons = page.getByRole('button', { name: '+' });
     this.playlistDuration = page.locator('#playlist-duration');
+    this.trackRows = page.locator('#tracklist .MuiGrid-container');
   }
-
-  // Actions
 
   async open() {
     await this.page.goto('/');
   }
 
-  async searchTrack(text) {
-    await this.searchInput.fill(text);
+  async search(track) {
+    await this.searchInput.fill(track);
+  }
+
+  async getFirstTrackTitle() {
+    return this.trackTitles.first().textContent();
   }
 
   async addTrackByIndex(index) {
     await this.addButtons.nth(index).click();
   }
 
-  async getVisibleTrackTitles() {
-    return this.trackTitles.allTextContents();
+  async getTrackDurationByIndex(index) {
+    return this.trackRows
+      .nth(index)
+      .locator('.MuiGrid-grid-xs-2 p')
+      .textContent();
   }
 
-  async getPlaylistDurationText() {
+  async getTotalDuration() {
     return this.playlistDuration.textContent();
   }
 }
