@@ -1,54 +1,61 @@
-require('dotenv').config();
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
+import { PlaylistPage } from '../pages/playlistPage.js';
 
-const BASE_URL =
-  process.env.BASE_URL || 'https://vite-react-alpha-lemon.vercel.app/';
+// TEST DATA
+const TEST_DATA = {
+  searchTrack: 'Summer',
+  expectedTrack: 'Summer Breeze',
+  tracksToAdd: [
+    { name: 'Summer Breeze', duration: '03:35' }, // 215 sec
+    { name: 'Autumn Leaves', duration: '03:00' }, // 180 sec
+  ],
+};
 
-test.describe('Playlist App Tests', () => {
+// UTILITY FOR TRANSLATING "mm:ss" → seconds
+function convertToSeconds(time) {
+  const [minutes, seconds] = time.split(':').map(Number);
+  return minutes * 60 + seconds;
+}
+
+test.describe('Playlist App Tests (Page Object)', () => {
+  let playlistPage;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(BASE_URL);
+    playlistPage = new PlaylistPage(page);
+    await playlistPage.open(); //  baseURL тянется из playwright.config.js
   });
 
-  test('Search filters tracks correctly', async ({ page }) => {
-    // Exact search by label "Search"
-    const searchInput = page.getByLabel('Search');
+  //  1. SEARCH
+  test('Search filters tracks correctly', async () => {
+    await playlistPage.searchTrack(TEST_DATA.searchTrack);
 
-    await searchInput.fill('Summer');
+    const titles = await playlistPage.getVisibleTrackTitles();
 
-    // Tracks are <p> with titles
-    const trackTitles = page.locator('#tracklist p');
-
-    await expect(trackTitles.first()).toContainText('Summer Breeze');
+    expect(titles.some(title => title.includes(TEST_DATA.expectedTrack))).toBeTruthy();
   });
 
-  test('Add track to playlist using + button', async ({ page }) => {
-    // The "+" buttons have the text "+"
-    const addButtons = page.getByRole('button', { name: '+' });
+  //  2. ADD TRACK
+  test('Add track to playlist using + button', async () => {
+    await playlistPage.addTrackByIndex(0);
 
-    await addButtons.first().click();
+    const durationText = await playlistPage.getPlaylistDurationText();
 
-    // After adding, the text in #playlist-duration changes
-    const durationText = page.locator('#playlist-duration');
-    await expect(durationText).not.toHaveText('No tracks on playlist');
+    expect(durationText).not.toBe('No tracks on playlist');
   });
 
-  test('Verify total duration is calculated correctly in seconds', async ({ page }) => {
-    const addButtons = page.getByRole('button', { name: '+' });
+  //  3. VERIFY TOTAL DURATION 
+  test('Verify total duration is calculated correctly in seconds', async () => {
+    await playlistPage.addTrackByIndex(0);
+    await playlistPage.addTrackByIndex(1);
 
-    // Add 2 tracks
-    // Summer Breeze → 03:35 → 215 сек
-    // Autumn Leaves → 03:00 → 180 сек
-    await addButtons.nth(0).click();
-    await addButtons.nth(1).click();
+    const expectedTotal = TEST_DATA.tracksToAdd
+      .map(track => convertToSeconds(track.duration))
+      .reduce((a, b) => a + b, 0);
 
-    // Checking the result
-    const totalDuration = page.locator('#playlist-duration');
-    await expect(totalDuration).toHaveText('395'); // 215 + 180 = 395
+    const actualText = await playlistPage.getPlaylistDurationText();
+
+    expect(Number(actualText)).toBe(expectedTotal);
   });
-
 });
-
-
 
 
