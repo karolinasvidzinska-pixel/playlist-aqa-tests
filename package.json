@@ -2,7 +2,11 @@
   "name": "playlist-aqa-tests",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,3 +19,4 @@
     "dotenv": "^17.2.3"
   }
 }
+

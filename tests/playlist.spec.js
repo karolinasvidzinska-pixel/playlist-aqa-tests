@@ -1,6 +1,7 @@
-import { test, expect } from './fixtures';
-import { TEST_DATA } from '../testData/playlistTestData';
-import { convertToSeconds } from '../helpers/time.helper';
+const { test, expect } = require('../fixtures/fixtures');
+const { TEST_DATA } = require('../testData/playlistTestData');
+const { convertToSeconds } = require('../helpers/time.helper');
+
 
 test.describe('Playlist Tests', () => {
   test.beforeEach(async ({ playlistPage }) => {
